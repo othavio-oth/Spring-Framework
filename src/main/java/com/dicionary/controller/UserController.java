@@ -8,23 +8,23 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.dicionary.dto.auth.TokenDTO;
 import com.dicionary.dto.auth.UserDTO;
-import com.dicionary.service.AuthenticationService;
+import com.dicionary.model.User;
+import com.dicionary.service.CustomUserService;
 
 @RestController
-@RequestMapping("/v1/auth")
-public class AuthController {
-	
-	@Autowired
-	private AuthenticationService authenticationService;
+@RequestMapping("v1/register")
+public class UserController {
 
+	@Autowired
+	private CustomUserService customUserService;
+	
+	
+	
 	@PostMapping
-	public ResponseEntity<TokenDTO> auth(@RequestBody UserDTO authForm){
-		try {
-			return ResponseEntity.ok(authenticationService.authenticate(authForm));
-		} catch (Exception e) {
-			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-		}
+	public ResponseEntity<User> saveUser(@RequestBody UserDTO dto){
+		User user = customUserService.saveUser(dto.fromDto());
+		return ResponseEntity.status(HttpStatus.CREATED).build();
+		
 	}
 }
