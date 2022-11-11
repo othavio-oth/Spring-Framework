@@ -4,6 +4,7 @@ import java.util.Date;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -12,7 +13,8 @@ import org.springframework.stereotype.Service;
 
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
-import com.dicionary.dto.auth.AuthForm;
+import com.auth0.jwt.exceptions.JWTVerificationException;
+import com.dicionary.dto.auth.UserDTO;
 import com.dicionary.dto.auth.TokenDTO;
 import com.dicionary.model.User;
 
@@ -20,6 +22,7 @@ import com.dicionary.model.User;
 public class AuthenticationService {
 
 	@Autowired
+	@Lazy
 	private AuthenticationManager authManager;
 	
 	@Value("${security.jwt.secret}")
@@ -29,7 +32,7 @@ public class AuthenticationService {
 	@Value("${security.jwt.issuer}")
 	private String issuer; 
 	
-	public TokenDTO authenticate(AuthForm authForm) throws AuthenticationException {
+	public TokenDTO authenticate(UserDTO authForm) throws AuthenticationException {
 		Authentication authenticate = authManager.authenticate(new UsernamePasswordAuthenticationToken(authForm.getEmail(), 
 				authForm.getPassword()));
 		
@@ -52,6 +55,22 @@ public class AuthenticationService {
 	private Algorithm generateAlgorithm() {
 		return Algorithm.HMAC256(secret);
 	}
-
 	
+	public boolean validateToken(String token) {
+		try {
+			if(token==null) {
+				return false;
+			}
+			
+			JWT.require(this.generateAlgorithm()).withIssuer(issuer).build().verify(token);
+			return true;
+			
+		} catch (JWTVerificationException e) {
+			return false;
+		}
+	}
+	public Long getUserId(String token) {
+		String subject = JWT.require(this.generateAlgorithm()).withIssuer(issuer).build().verify(token).getSubject();
+		return Long.parseLong(subject);
+	}	
 }
